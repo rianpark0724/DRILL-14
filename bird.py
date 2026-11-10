@@ -1,9 +1,11 @@
+from pathlib import Path
+
 from pico2d import get_canvas_width, load_image
 
 import game_framework
 
 
-SPRITE_SHEET = 'bird_animation.png'
+SPRITE_SHEET = str(Path(__file__).resolve().with_name('bird_animation.png'))
 SHEET_WIDTH = 918
 SHEET_HEIGHT = 506
 FRAME_COLUMNS = 5
@@ -32,15 +34,12 @@ class Bird:
         self.direction = direction
         self.animation_time = phase % 1.0 * WINGBEAT_DURATION
         self.frame_index = WINGBEAT_FRAME_INDICES[0]
+        self._update_animation_frame()
 
     def update(self):
         frame_time = max(0.0, game_framework.frame_time)
         self.animation_time += frame_time
-        frame_position = (
-            self.animation_time % WINGBEAT_DURATION
-        ) / WINGBEAT_DURATION
-        frame_slot = int(frame_position * len(WINGBEAT_FRAME_INDICES))
-        self.frame_index = WINGBEAT_FRAME_INDICES[frame_slot]
+        self._update_animation_frame()
 
         self.x += self.direction * FLIGHT_SPEED_PPS * frame_time
 
@@ -53,6 +52,13 @@ class Bird:
         elif self.x > right_edge:
             self.x = right_edge
             self.direction = -1
+
+    def _update_animation_frame(self):
+        frame_position = (
+            self.animation_time % WINGBEAT_DURATION
+        ) / WINGBEAT_DURATION
+        frame_slot = int(frame_position * len(WINGBEAT_FRAME_INDICES))
+        self.frame_index = WINGBEAT_FRAME_INDICES[frame_slot]
 
     @staticmethod
     def frame_rect(frame_index):
@@ -77,4 +83,4 @@ class Bird:
             source_x, source_y, source_width, source_height,
             0, 'h' if self.direction < 0 else '',
             self.x, self.y,
-            source_width * scale, source_height * scale)
+            round(source_width * scale), round(source_height * scale))
