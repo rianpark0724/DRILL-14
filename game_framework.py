@@ -1,4 +1,7 @@
 import time
+
+TARGET_FRAME_RATE = 60
+FRAME_DURATION = 1.0 / TARGET_FRAME_RATE
 running = False
 stack = []
 
@@ -38,15 +41,19 @@ def run(start_mode):
     try:
         start_mode.init()
         global frame_time
-        frame_time = 0.0
-        current_time = time.time()
+        frame_time = FRAME_DURATION
         while running:
+            frame_start = time.perf_counter()
             stack[-1].handle_events()
             stack[-1].update()
             stack[-1].render()
-            frame_time = time.time() - current_time
+
+            elapsed = time.perf_counter() - frame_start
+            if elapsed < FRAME_DURATION:
+                time.sleep(FRAME_DURATION - elapsed)
+
+            frame_time = time.perf_counter() - frame_start
             frame_rate = 1.0 / frame_time if frame_time > 0 else 0
-            current_time += frame_time
     finally:
         while stack:
             stack.pop().finish()
