@@ -1,5 +1,7 @@
 from pico2d import load_image
 
+import game_framework
+
 
 SPRITE_SHEET = 'bird_animation.png'
 SHEET_WIDTH = 918
@@ -7,6 +9,8 @@ SHEET_HEIGHT = 506
 FRAME_COLUMNS = 5
 FRAME_ROWS = (5, 5, 4)
 FRAME_COUNT = sum(FRAME_ROWS)
+WINGBEAT_DURATION = 0.1
+WINGBEAT_FRAME_INDICES = (0, 2, 4, 6, 8, 12)
 BODY_LENGTH_PX = 22
 BODY_WIDTH_RATIO = 0.8
 
@@ -14,14 +18,23 @@ BODY_WIDTH_RATIO = 0.8
 class Bird:
     image = None
 
-    def __init__(self, x, y, direction=1):
+    def __init__(self, x, y, direction=1, phase=0.0):
         if Bird.image is None:
             Bird.image = load_image(SPRITE_SHEET)
 
         self.x = x
         self.y = y
         self.direction = direction
-        self.frame_index = 0
+        self.animation_time = phase % 1.0 * WINGBEAT_DURATION
+        self.frame_index = WINGBEAT_FRAME_INDICES[0]
+
+    def update(self):
+        self.animation_time += max(0.0, game_framework.frame_time)
+        frame_position = (
+            self.animation_time % WINGBEAT_DURATION
+        ) / WINGBEAT_DURATION
+        frame_slot = int(frame_position * len(WINGBEAT_FRAME_INDICES))
+        self.frame_index = WINGBEAT_FRAME_INDICES[frame_slot]
 
     @staticmethod
     def frame_rect(frame_index):
@@ -47,6 +60,3 @@ class Bird:
             0, 'h' if self.direction < 0 else '',
             self.x, self.y,
             source_width * scale, source_height * scale)
-
-    def update(self):
-        pass
