@@ -1,4 +1,4 @@
-from pico2d import load_image
+from pico2d import get_canvas_width, load_image
 
 import game_framework
 
@@ -11,8 +11,12 @@ FRAME_ROWS = (5, 5, 4)
 FRAME_COUNT = sum(FRAME_ROWS)
 WINGBEAT_DURATION = 0.1
 WINGBEAT_FRAME_INDICES = (0, 2, 4, 6, 8, 12)
+BIRD_BODY_LENGTH_M = 0.22
 BODY_LENGTH_PX = 22
 BODY_WIDTH_RATIO = 0.8
+PIXELS_PER_METER = BODY_LENGTH_PX / BIRD_BODY_LENGTH_M
+FLIGHT_SPEED_MPS = 25 * 1000 / 3600
+FLIGHT_SPEED_PPS = FLIGHT_SPEED_MPS * PIXELS_PER_METER
 
 
 class Bird:
@@ -29,12 +33,25 @@ class Bird:
         self.frame_index = WINGBEAT_FRAME_INDICES[0]
 
     def update(self):
-        self.animation_time += max(0.0, game_framework.frame_time)
+        frame_time = max(0.0, game_framework.frame_time)
+        self.animation_time += frame_time
         frame_position = (
             self.animation_time % WINGBEAT_DURATION
         ) / WINGBEAT_DURATION
         frame_slot = int(frame_position * len(WINGBEAT_FRAME_INDICES))
         self.frame_index = WINGBEAT_FRAME_INDICES[frame_slot]
+
+        self.x += self.direction * FLIGHT_SPEED_PPS * frame_time
+
+        half_sprite_width = BODY_LENGTH_PX / BODY_WIDTH_RATIO / 2
+        left_edge = half_sprite_width
+        right_edge = get_canvas_width() - half_sprite_width
+        if self.x < left_edge:
+            self.x = left_edge
+            self.direction = 1
+        elif self.x > right_edge:
+            self.x = right_edge
+            self.direction = -1
 
     @staticmethod
     def frame_rect(frame_index):
